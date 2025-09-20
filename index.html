@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orbit Idea Engine</title>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -157,29 +158,45 @@
 
   <script>
     // Local library
-    let library = [
-      { title: "Minimal Logo", tags: ["logo","branding","simple"], url: "https://via.placeholder.com/400x300?text=Minimal+Logo" },
-      { title: "Organic Packaging", tags: ["packaging","eco","product"], url: "https://via.placeholder.com/400x300?text=Organic+Packaging" },
-      { title: "Church Flyer", tags: ["flyer","church","poster"], url: "https://via.placeholder.com/400x300?text=Church+Flyer" },
-      { title: "Business Card", tags: ["card","business","identity"], url: "https://via.placeholder.com/400x300?text=Business+Card" },
-      { title: "Event Poster", tags: ["poster","event","advert"], url: "https://via.placeholder.com/400x300?text=Event+Poster" },
-      { title: "Website Mockup", tags: ["website","ui","design"], url: "https://via.placeholder.com/400x300?text=Website+Mockup" }
-    ];
+let library = [
+  { title: "Minimal Logo", tags: ["logo","branding","simple"], url: "https://via.placeholder.com/400x300?text=Minimal+Logo" },
+  { title: "Organic Packaging", tags: ["packaging","eco","product"], url: "https://via.placeholder.com/400x300?text=Organic+Packaging" },
+  { title: "Church Flyer", tags: ["flyer","church","poster"], url: "https://via.placeholder.com/400x300?text=Church+Flyer" },
+  { title: "Business Card", tags: ["card","business","identity"], url: "https://via.placeholder.com/400x300?text=Business+Card" },
+  { title: "Event Poster", tags: ["poster","event","advert"], url: "https://via.placeholder.com/400x300?text=Event+Poster" },
+  { title: "Website Mockup", tags: ["website","ui","design"], url: "https://via.placeholder.com/400x300?text=Website+Mockup" }
+];
 
-    // Upload Design
-    function uploadDesign() {
-      const title = document.getElementById("designTitle").value;
-      const tags = document.getElementById("designTags").value.split(",");
-      const fileInput = document.getElementById("designFile");
-      const file = fileInput.files[0];
-      if (title && file) {
-        const url = URL.createObjectURL(file);
-        library.push({ title, tags, url });
-        alert("Design uploaded successfully!");
-      } else {
-        alert("Please enter a title and choose a file.");
-      }
-    }
+// Load uploaded designs from localStorage
+const savedLibrary = JSON.parse(localStorage.getItem("libraryUploads"));
+if (Array.isArray(savedLibrary)) {
+  library = library.concat(savedLibrary);
+}
+
+// Upload Design
+function uploadDesign() {
+  const title = document.getElementById("designTitle").value;
+  const tags = document.getElementById("designTags").value.split(",");
+  const fileInput = document.getElementById("designFile");
+  const file = fileInput.files[0];
+  if (title && file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const url = e.target.result;
+      const newItem = { title, tags, url };
+      library.push(newItem);
+      // Save uploads to localStorage
+      let uploads = JSON.parse(localStorage.getItem("libraryUploads")) || [];
+      uploads.push(newItem);
+      localStorage.setItem("libraryUploads", JSON.stringify(uploads));
+      alert("Design uploaded successfully!");
+    };
+    reader.readAsDataURL(file);
+  } else {
+    alert("Please enter a title and choose a file.");
+  }
+}
+    
 
     // Search Ideas
     function searchIdeas() {
@@ -356,7 +373,24 @@ function searchIdeas() {
 
     // Load on start
     window.onload = renderMoodboard;
+    const PIXABAY_API_KEY = "52385967-6cf8612102602432128f9ae8d";
+    async function searchPixabay(query) {
+  const url = `https://pixabay.com/api/?key=${PIXABAY_API_KEY}&q=${encodeURIComponent(query)}&image_type=photo&per_page=12`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.hits && data.hits.length > 0) {
+      data.hits.forEach(hit => {
+        displaySearchResult(hit.largeImageURL, hit.tags);
+      });
+    }
+  } catch (error) {
+    console.error("Pixabay search error:", error);
+  }
+}
+
   </script>
 </body>
 </html>
-
